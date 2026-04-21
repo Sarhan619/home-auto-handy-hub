@@ -20,15 +20,22 @@ export type Database = {
           cancel_reason: string | null
           cancelled_at: string | null
           category_id: string
+          commission_pct: number | null
           completed_at: string | null
           created_at: string
           customer_id: string
           dispatch_mode: Database["public"]["Enums"]["dispatch_mode"]
+          final_price: number | null
           id: string
+          is_paid: boolean
           job_address: string
           job_lat: number
           job_lng: number
           notes: string | null
+          paid_at: string | null
+          payment_method: Database["public"]["Enums"]["payment_method"] | null
+          price_adjustment_note: string | null
+          quoted_price: number | null
           scheduled_for: string | null
           started_at: string | null
           status: Database["public"]["Enums"]["booking_status"]
@@ -40,15 +47,22 @@ export type Database = {
           cancel_reason?: string | null
           cancelled_at?: string | null
           category_id: string
+          commission_pct?: number | null
           completed_at?: string | null
           created_at?: string
           customer_id: string
           dispatch_mode?: Database["public"]["Enums"]["dispatch_mode"]
+          final_price?: number | null
           id?: string
+          is_paid?: boolean
           job_address: string
           job_lat: number
           job_lng: number
           notes?: string | null
+          paid_at?: string | null
+          payment_method?: Database["public"]["Enums"]["payment_method"] | null
+          price_adjustment_note?: string | null
+          quoted_price?: number | null
           scheduled_for?: string | null
           started_at?: string | null
           status?: Database["public"]["Enums"]["booking_status"]
@@ -60,15 +74,22 @@ export type Database = {
           cancel_reason?: string | null
           cancelled_at?: string | null
           category_id?: string
+          commission_pct?: number | null
           completed_at?: string | null
           created_at?: string
           customer_id?: string
           dispatch_mode?: Database["public"]["Enums"]["dispatch_mode"]
+          final_price?: number | null
           id?: string
+          is_paid?: boolean
           job_address?: string
           job_lat?: number
           job_lng?: number
           notes?: string | null
+          paid_at?: string | null
+          payment_method?: Database["public"]["Enums"]["payment_method"] | null
+          price_adjustment_note?: string | null
+          quoted_price?: number | null
           scheduled_for?: string | null
           started_at?: string | null
           status?: Database["public"]["Enums"]["booking_status"]
@@ -85,6 +106,69 @@ export type Database = {
           },
           {
             foreignKeyName: "bookings_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      commissions: {
+        Row: {
+          booking_id: string
+          commission_amount: number
+          commission_pct: number
+          created_at: string
+          gross_amount: number
+          id: string
+          settled_at: string | null
+          settled_by: string | null
+          settlement_note: string | null
+          status: Database["public"]["Enums"]["commission_status"]
+          updated_at: string
+          vendor_id: string
+          vendor_net: number
+        }
+        Insert: {
+          booking_id: string
+          commission_amount: number
+          commission_pct: number
+          created_at?: string
+          gross_amount: number
+          id?: string
+          settled_at?: string | null
+          settled_by?: string | null
+          settlement_note?: string | null
+          status?: Database["public"]["Enums"]["commission_status"]
+          updated_at?: string
+          vendor_id: string
+          vendor_net: number
+        }
+        Update: {
+          booking_id?: string
+          commission_amount?: number
+          commission_pct?: number
+          created_at?: string
+          gross_amount?: number
+          id?: string
+          settled_at?: string | null
+          settled_by?: string | null
+          settlement_note?: string | null
+          status?: Database["public"]["Enums"]["commission_status"]
+          updated_at?: string
+          vendor_id?: string
+          vendor_net?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "commissions_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: true
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "commissions_vendor_id_fkey"
             columns: ["vendor_id"]
             isOneToOne: false
             referencedRelation: "vendors"
@@ -347,15 +431,22 @@ export type Database = {
           cancel_reason: string | null
           cancelled_at: string | null
           category_id: string
+          commission_pct: number | null
           completed_at: string | null
           created_at: string
           customer_id: string
           dispatch_mode: Database["public"]["Enums"]["dispatch_mode"]
+          final_price: number | null
           id: string
+          is_paid: boolean
           job_address: string
           job_lat: number
           job_lng: number
           notes: string | null
+          paid_at: string | null
+          payment_method: Database["public"]["Enums"]["payment_method"] | null
+          price_adjustment_note: string | null
+          quoted_price: number | null
           scheduled_for: string | null
           started_at: string | null
           status: Database["public"]["Enums"]["booking_status"]
@@ -403,6 +494,47 @@ export type Database = {
           vendor_id: string
         }[]
       }
+      vendor_set_booking_payment: {
+        Args: {
+          _adjustment_note?: string
+          _booking_id: string
+          _final_price: number
+          _payment_method: Database["public"]["Enums"]["payment_method"]
+        }
+        Returns: {
+          accepted_at: string | null
+          cancel_reason: string | null
+          cancelled_at: string | null
+          category_id: string
+          commission_pct: number | null
+          completed_at: string | null
+          created_at: string
+          customer_id: string
+          dispatch_mode: Database["public"]["Enums"]["dispatch_mode"]
+          final_price: number | null
+          id: string
+          is_paid: boolean
+          job_address: string
+          job_lat: number
+          job_lng: number
+          notes: string | null
+          paid_at: string | null
+          payment_method: Database["public"]["Enums"]["payment_method"] | null
+          price_adjustment_note: string | null
+          quoted_price: number | null
+          scheduled_for: string | null
+          started_at: string | null
+          status: Database["public"]["Enums"]["booking_status"]
+          updated_at: string
+          vendor_id: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "bookings"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
     }
     Enums: {
       app_role: "customer" | "vendor" | "admin"
@@ -415,7 +547,9 @@ export type Database = {
         | "cancelled"
         | "declined"
         | "expired"
+      commission_status: "owed" | "settled"
       dispatch_mode: "broadcast" | "direct"
+      payment_method: "cash" | "bank_transfer" | "card_on_site" | "other"
       price_type: "fixed" | "hourly" | "quote"
       verification_status: "pending" | "approved" | "rejected"
     }
@@ -556,7 +690,9 @@ export const Constants = {
         "declined",
         "expired",
       ],
+      commission_status: ["owed", "settled"],
       dispatch_mode: ["broadcast", "direct"],
+      payment_method: ["cash", "bank_transfer", "card_on_site", "other"],
       price_type: ["fixed", "hourly", "quote"],
       verification_status: ["pending", "approved", "rejected"],
     },

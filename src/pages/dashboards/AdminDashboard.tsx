@@ -5,26 +5,33 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Users, Store, Receipt, ShieldAlert } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { formatCurrency } from "@/lib/payment";
 
 export default function AdminDashboard() {
   const [pending, setPending] = useState<number>(0);
   const [vendorCount, setVendorCount] = useState<number>(0);
+  const [commissionOwed, setCommissionOwed] = useState<number>(0);
+  const [owedCount, setOwedCount] = useState<number>(0);
 
   useEffect(() => {
     (async () => {
-      const [{ count: pendingC }, { count: allC }] = await Promise.all([
+      const [{ count: pendingC }, { count: allC }, { data: owed }] = await Promise.all([
         supabase.from("vendors").select("id", { count: "exact", head: true }).eq("verification_status", "pending"),
         supabase.from("vendors").select("id", { count: "exact", head: true }),
+        supabase.from("commissions").select("commission_amount").eq("status", "owed"),
       ]);
       setPending(pendingC ?? 0);
       setVendorCount(allC ?? 0);
+      const sum = (owed ?? []).reduce((s, r: { commission_amount: number }) => s + Number(r.commission_amount), 0);
+      setCommissionOwed(sum);
+      setOwedCount((owed ?? []).length);
     })();
   }, []);
 
   const tiles = [
     { label: "Customers", value: "—", icon: Users },
     { label: "Vendors", value: vendorCount, icon: Store },
-    { label: "Transactions", value: "0", icon: Receipt },
+    { label: "Commission owed", value: formatCurrency(commissionOwed), icon: Receipt },
     { label: "Pending approvals", value: pending, icon: ShieldAlert },
   ];
 
@@ -66,6 +73,24 @@ export default function AdminDashboard() {
           <CardContent>
             <p className="text-sm text-muted-foreground">
               {pending === 0 ? "No vendors awaiting verification." : `${pending} vendor${pending === 1 ? "" : "s"} awaiting verification.`}
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card className="mt-6">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle>Commissions ledger</CardTitle>
+              <Button asChild variant="outline" size="sm">
+                <Link to="/admin/commissions">Open ledger</Link>
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-muted-foreground">
+              {owedCount === 0
+                ? "No outstanding commissions to settle."
+                : `${owedCount} commission${owedCount === 1 ? "" : "s"} totaling ${formatCurrency(commissionOwed)} awaiting settlement.`}
             </p>
           </CardContent>
         </Card>

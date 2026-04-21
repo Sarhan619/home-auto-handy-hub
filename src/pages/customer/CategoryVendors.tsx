@@ -160,7 +160,13 @@ export default function CategoryVendors() {
                       <div className="flex items-center justify-between gap-3 sm:flex-col sm:items-end">
                         <p className="text-sm font-semibold">{formatPrice(v)}</p>
                         <Button asChild size="sm">
-                          <Link to={`/book/new?category=${category!.id}&mode=direct&vendor=${v.vendor_id}`}>
+                          <Link
+                            to={`/book/new?category=${category!.id}&mode=direct&vendor=${v.vendor_id}${
+                              v.price_type !== "quote" && v.base_price != null
+                                ? `&price=${v.base_price}&priceType=${v.price_type}`
+                                : `&priceType=quote`
+                            }`}
+                          >
                             Request
                           </Link>
                         </Button>

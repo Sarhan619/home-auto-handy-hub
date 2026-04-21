@@ -11,6 +11,9 @@ import { STATUS_LABEL, STATUS_VARIANT, VENDOR_NEXT, VENDOR_NEXT_LABEL, ACTIVE_ST
 import { toast } from "sonner";
 import { ArrowLeft, MapPin, Calendar, FileText, Loader2, X, Truck } from "lucide-react";
 import ReviewSection from "@/components/ReviewSection";
+import CompleteJobDialog from "@/components/CompleteJobDialog";
+import { PAYMENT_METHOD_LABEL, formatCurrency } from "@/lib/payment";
+import type { Database } from "@/integrations/supabase/types";
 
 type Booking = {
   id: string;
@@ -30,6 +33,13 @@ type Booking = {
   cancelled_at: string | null;
   cancel_reason: string | null;
   created_at: string;
+  quoted_price: number | null;
+  final_price: number | null;
+  price_adjustment_note: string | null;
+  commission_pct: number | null;
+  payment_method: Database["public"]["Enums"]["payment_method"] | null;
+  is_paid: boolean;
+  paid_at: string | null;
   service_categories: { name: string; slug: string } | null;
   vendors: { id: string; business_name: string; phone: string | null; user_id: string } | null;
 };
@@ -49,6 +59,7 @@ export default function BookingDetail() {
   const [booking, setBooking] = useState<Booking | null>(null);
   const [loading, setLoading] = useState(true);
   const [acting, setActing] = useState(false);
+  const [completeOpen, setCompleteOpen] = useState(false);
 
   const load = () => {
     if (!id) return;
@@ -99,6 +110,10 @@ export default function BookingDetail() {
   const vendorNext = isAssignedVendor ? VENDOR_NEXT[booking.status] : undefined;
 
   const advance = async (next: BookingStatus) => {
+    if (next === "completed") {
+      setCompleteOpen(true);
+      return;
+    }
     setActing(true);
     const { error } = await supabase.from("bookings").update({ status: next }).eq("id", booking.id);
     setActing(false);
@@ -211,6 +226,40 @@ export default function BookingDetail() {
           </CardContent>
         </Card>
 
+        {(booking.quoted_price != null || booking.final_price != null) && (
+          <Card className="mb-6">
+            <CardHeader><CardTitle className="text-base">Payment</CardTitle></CardHeader>
+            <CardContent className="space-y-2 text-sm">
+              {booking.quoted_price != null && (
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Quoted price</span>
+                  <span className="font-medium">{formatCurrency(booking.quoted_price)}</span>
+                </div>
+              )}
+              {booking.final_price != null && (
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Final price</span>
+                  <span className="font-medium">{formatCurrency(booking.final_price)}</span>
+                </div>
+              )}
+              {booking.payment_method && (
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Method</span>
+                  <span className="font-medium">{PAYMENT_METHOD_LABEL[booking.payment_method]}</span>
+                </div>
+              )}
+              {booking.is_paid && (
+                <Badge variant="default" className="mt-1">Paid offline</Badge>
+              )}
+              {booking.price_adjustment_note && (
+                <p className="rounded-md bg-muted/40 p-2 text-xs text-muted-foreground">
+                  <span className="font-medium text-foreground">Adjustment note:</span> {booking.price_adjustment_note}
+                </p>
+              )}
+            </CardContent>
+          </Card>
+        )}
+
         <div className="flex flex-wrap gap-2">
           {isAssignedVendor && vendorNext && (
             <Button onClick={() => advance(vendorNext)} disabled={acting}>
@@ -240,6 +289,15 @@ export default function BookingDetail() {
             />
           </div>
         )}
+
+        <CompleteJobDialog
+          open={completeOpen}
+          onOpenChange={setCompleteOpen}
+          bookingId={booking.id}
+          quotedPrice={booking.quoted_price}
+          commissionPct={booking.commission_pct}
+          onCompleted={load}
+        />
       </main>
     </div>
   );
