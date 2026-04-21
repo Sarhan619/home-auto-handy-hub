@@ -8,6 +8,7 @@ import { Briefcase, DollarSign, Star, TrendingUp, Loader2, AlertCircle, CheckCir
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import AvailabilityToggle from "@/components/AvailabilityToggle";
+import { formatCurrency } from "@/lib/payment";
 
 type VendorRow = {
   id: string;
@@ -19,6 +20,8 @@ type VendorRow = {
   is_online: boolean;
 };
 
+type EarningsSummary = { net: number; owed: number };
+
 const statusVariant = {
   pending: "secondary",
   approved: "default",
@@ -29,6 +32,7 @@ export default function VendorDashboard() {
   const { user } = useAuth();
   const [vendor, setVendor] = useState<VendorRow | null>(null);
   const [loading, setLoading] = useState(true);
+  const [earnings, setEarnings] = useState<EarningsSummary>({ net: 0, owed: 0 });
 
   useEffect(() => {
     if (!user) return;
@@ -43,9 +47,28 @@ export default function VendorDashboard() {
       });
   }, [user]);
 
+  useEffect(() => {
+    if (!vendor?.id) return;
+    supabase
+      .from("commissions")
+      .select("vendor_net,commission_amount,status")
+      .eq("vendor_id", vendor.id)
+      .then(({ data }) => {
+        const sum = (data ?? []).reduce(
+          (acc, r: { vendor_net: number; commission_amount: number; status: string }) => {
+            acc.net += Number(r.vendor_net);
+            if (r.status === "owed") acc.owed += Number(r.commission_amount);
+            return acc;
+          },
+          { net: 0, owed: 0 }
+        );
+        setEarnings(sum);
+      });
+  }, [vendor?.id]);
+
   const stats = [
     { label: "Active jobs", value: "0", icon: Briefcase },
-    { label: "This month", value: "$0", icon: DollarSign },
+    { label: "Net earnings", value: formatCurrency(earnings.net), icon: DollarSign },
     { label: "Rating", value: vendor?.avg_rating ? vendor.avg_rating.toFixed(1) : "—", icon: Star },
     { label: "Total jobs", value: vendor?.total_jobs ?? 0, icon: TrendingUp },
   ];
@@ -163,14 +186,26 @@ export default function VendorDashboard() {
             </CardContent>
           </Card>
           <Card>
-            <CardHeader><CardTitle>Business profile</CardTitle></CardHeader>
+            <CardHeader>
+              <CardTitle className="flex items-center justify-between">
+                Earnings
+                {earnings.owed > 0 && (
+                  <Badge variant="destructive" className="text-[10px]">{formatCurrency(earnings.owed)} owed</Badge>
+                )}
+              </CardTitle>
+            </CardHeader>
             <CardContent>
               <p className="text-sm text-muted-foreground">
-                {vendor ? "Keep your details up to date." : "Complete your profile to get verified."}
+                Track money collected, your net takeaway, and commission owed to the platform.
               </p>
-              <Button asChild variant="outline" className="mt-3">
-                <Link to="/vendor/onboarding">{vendor ? "Edit profile" : "Start onboarding"}</Link>
-              </Button>
+              <div className="mt-3 flex flex-wrap gap-2">
+                <Button asChild variant="outline">
+                  <Link to="/vendor/earnings">View earnings</Link>
+                </Button>
+                <Button asChild variant="ghost">
+                  <Link to="/vendor/onboarding">{vendor ? "Edit profile" : "Onboarding"}</Link>
+                </Button>
+              </div>
             </CardContent>
           </Card>
         </section>

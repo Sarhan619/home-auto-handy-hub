@@ -16,7 +16,9 @@ import CategoryVendors from "./pages/customer/CategoryVendors.tsx";
 import NewBooking from "./pages/customer/NewBooking.tsx";
 import MyBookings from "./pages/customer/MyBookings.tsx";
 import VendorJobs from "./pages/vendor/VendorJobs.tsx";
+import VendorEarnings from "./pages/vendor/VendorEarnings.tsx";
 import BookingDetail from "./pages/BookingDetail.tsx";
+import AdminCommissions from "./pages/admin/AdminCommissions.tsx";
 import ProtectedRoute from "./components/ProtectedRoute.tsx";
 import { AuthProvider } from "./hooks/useAuth.tsx";
 
@@ -53,6 +55,14 @@ const App = () => (
               element={
                 <ProtectedRoute requiredRole="vendor">
                   <VendorJobs />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/vendor/earnings"
+              element={
+                <ProtectedRoute requiredRole="vendor">
+                  <VendorEarnings />
                 </ProtectedRoute>
               }
             />
@@ -117,6 +127,14 @@ const App = () => (
               element={
                 <ProtectedRoute requiredRole="admin">
                   <AdminVendors />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/commissions"
+              element={
+                <ProtectedRoute requiredRole="admin">
+                  <AdminCommissions />
                 </ProtectedRoute>
               }
             />
