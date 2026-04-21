@@ -141,9 +141,16 @@ export default function VendorDashboard() {
 
         <section className="grid gap-6 md:grid-cols-2">
           <Card>
-            <CardHeader><CardTitle>Nearby job requests</CardTitle></CardHeader>
-            <CardContent>
-              <p className="text-sm text-muted-foreground">No open requests in your service area.</p>
+            <CardHeader><CardTitle>Job requests</CardTitle></CardHeader>
+            <CardContent className="space-y-3">
+              <p className="text-sm text-muted-foreground">
+                {vendor?.verification_status === "approved"
+                  ? "View open requests in your service area and your active jobs."
+                  : "Once you're approved, open requests will show up here."}
+              </p>
+              <Button asChild disabled={vendor?.verification_status !== "approved"}>
+                <Link to="/vendor/jobs">Open jobs board</Link>
+              </Button>
             </CardContent>
           </Card>
           <Card>

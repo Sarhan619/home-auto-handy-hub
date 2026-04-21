@@ -24,6 +24,21 @@ export default function SiteHeader() {
         <nav className="flex items-center gap-2">
           {user ? (
             <>
+              {roles.includes("customer") && (
+                <>
+                  <Button variant="ghost" onClick={() => navigate("/services")} className="hidden sm:inline-flex">
+                    Services
+                  </Button>
+                  <Button variant="ghost" onClick={() => navigate("/bookings")} className="hidden sm:inline-flex">
+                    Bookings
+                  </Button>
+                </>
+              )}
+              {roles.includes("vendor") && (
+                <Button variant="ghost" onClick={() => navigate("/vendor/jobs")} className="hidden sm:inline-flex">
+                  Jobs
+                </Button>
+              )}
               <Button variant="ghost" onClick={() => navigate(dashHref)}>
                 Dashboard
               </Button>
