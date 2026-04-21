@@ -14,6 +14,84 @@ export type Database = {
   }
   public: {
     Tables: {
+      bookings: {
+        Row: {
+          accepted_at: string | null
+          cancel_reason: string | null
+          cancelled_at: string | null
+          category_id: string
+          completed_at: string | null
+          created_at: string
+          customer_id: string
+          dispatch_mode: Database["public"]["Enums"]["dispatch_mode"]
+          id: string
+          job_address: string
+          job_lat: number
+          job_lng: number
+          notes: string | null
+          scheduled_for: string | null
+          started_at: string | null
+          status: Database["public"]["Enums"]["booking_status"]
+          updated_at: string
+          vendor_id: string | null
+        }
+        Insert: {
+          accepted_at?: string | null
+          cancel_reason?: string | null
+          cancelled_at?: string | null
+          category_id: string
+          completed_at?: string | null
+          created_at?: string
+          customer_id: string
+          dispatch_mode?: Database["public"]["Enums"]["dispatch_mode"]
+          id?: string
+          job_address: string
+          job_lat: number
+          job_lng: number
+          notes?: string | null
+          scheduled_for?: string | null
+          started_at?: string | null
+          status?: Database["public"]["Enums"]["booking_status"]
+          updated_at?: string
+          vendor_id?: string | null
+        }
+        Update: {
+          accepted_at?: string | null
+          cancel_reason?: string | null
+          cancelled_at?: string | null
+          category_id?: string
+          completed_at?: string | null
+          created_at?: string
+          customer_id?: string
+          dispatch_mode?: Database["public"]["Enums"]["dispatch_mode"]
+          id?: string
+          job_address?: string
+          job_lat?: number
+          job_lng?: number
+          notes?: string | null
+          scheduled_for?: string | null
+          started_at?: string | null
+          status?: Database["public"]["Enums"]["booking_status"]
+          updated_at?: string
+          vendor_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bookings_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "service_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bookings_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -214,6 +292,39 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      accept_broadcast_booking: {
+        Args: { _booking_id: string }
+        Returns: {
+          accepted_at: string | null
+          cancel_reason: string | null
+          cancelled_at: string | null
+          category_id: string
+          completed_at: string | null
+          created_at: string
+          customer_id: string
+          dispatch_mode: Database["public"]["Enums"]["dispatch_mode"]
+          id: string
+          job_address: string
+          job_lat: number
+          job_lng: number
+          notes: string | null
+          scheduled_for: string | null
+          started_at: string | null
+          status: Database["public"]["Enums"]["booking_status"]
+          updated_at: string
+          vendor_id: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "bookings"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      distance_km: {
+        Args: { lat1: number; lat2: number; lng1: number; lng2: number }
+        Returns: number
+      }
       get_my_roles: {
         Args: never
         Returns: Database["public"]["Enums"]["app_role"][]
@@ -225,9 +336,34 @@ export type Database = {
         }
         Returns: boolean
       }
+      search_vendors_for_job: {
+        Args: { _category_id: string; _lat: number; _lng: number }
+        Returns: {
+          avg_rating: number
+          base_price: number
+          bio: string
+          business_name: string
+          distance_km: number
+          is_online: boolean
+          logo_url: string
+          price_type: Database["public"]["Enums"]["price_type"]
+          total_jobs: number
+          vendor_id: string
+        }[]
+      }
     }
     Enums: {
       app_role: "customer" | "vendor" | "admin"
+      booking_status:
+        | "requested"
+        | "accepted"
+        | "en_route"
+        | "in_progress"
+        | "completed"
+        | "cancelled"
+        | "declined"
+        | "expired"
+      dispatch_mode: "broadcast" | "direct"
       price_type: "fixed" | "hourly" | "quote"
       verification_status: "pending" | "approved" | "rejected"
     }
@@ -358,6 +494,17 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["customer", "vendor", "admin"],
+      booking_status: [
+        "requested",
+        "accepted",
+        "en_route",
+        "in_progress",
+        "completed",
+        "cancelled",
+        "declined",
+        "expired",
+      ],
+      dispatch_mode: ["broadcast", "direct"],
       price_type: ["fixed", "hourly", "quote"],
       verification_status: ["pending", "approved", "rejected"],
     },
