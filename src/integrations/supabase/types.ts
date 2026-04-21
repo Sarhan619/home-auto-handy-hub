@@ -41,6 +41,39 @@ export type Database = {
         }
         Relationships: []
       }
+      service_categories: {
+        Row: {
+          created_at: string
+          default_commission_pct: number
+          description: string | null
+          icon: string | null
+          id: string
+          is_active: boolean
+          name: string
+          slug: string
+        }
+        Insert: {
+          created_at?: string
+          default_commission_pct?: number
+          description?: string | null
+          icon?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          slug: string
+        }
+        Update: {
+          created_at?: string
+          default_commission_pct?: number
+          description?: string | null
+          icon?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          slug?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -59,6 +92,120 @@ export type Database = {
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
           user_id?: string
+        }
+        Relationships: []
+      }
+      vendor_services: {
+        Row: {
+          base_price: number | null
+          category_id: string
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean
+          price_type: Database["public"]["Enums"]["price_type"]
+          vendor_id: string
+        }
+        Insert: {
+          base_price?: number | null
+          category_id: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          price_type?: Database["public"]["Enums"]["price_type"]
+          vendor_id: string
+        }
+        Update: {
+          base_price?: number | null
+          category_id?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          price_type?: Database["public"]["Enums"]["price_type"]
+          vendor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vendor_services_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "service_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vendor_services_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vendors: {
+        Row: {
+          avg_rating: number | null
+          base_address: string | null
+          base_lat: number | null
+          base_lng: number | null
+          bio: string | null
+          business_name: string
+          created_at: string
+          id: string
+          insurance_doc_path: string | null
+          is_online: boolean
+          license_doc_path: string | null
+          logo_url: string | null
+          phone: string | null
+          rejection_reason: string | null
+          service_radius_km: number
+          total_jobs: number
+          updated_at: string
+          user_id: string
+          verification_status: Database["public"]["Enums"]["verification_status"]
+        }
+        Insert: {
+          avg_rating?: number | null
+          base_address?: string | null
+          base_lat?: number | null
+          base_lng?: number | null
+          bio?: string | null
+          business_name: string
+          created_at?: string
+          id?: string
+          insurance_doc_path?: string | null
+          is_online?: boolean
+          license_doc_path?: string | null
+          logo_url?: string | null
+          phone?: string | null
+          rejection_reason?: string | null
+          service_radius_km?: number
+          total_jobs?: number
+          updated_at?: string
+          user_id: string
+          verification_status?: Database["public"]["Enums"]["verification_status"]
+        }
+        Update: {
+          avg_rating?: number | null
+          base_address?: string | null
+          base_lat?: number | null
+          base_lng?: number | null
+          bio?: string | null
+          business_name?: string
+          created_at?: string
+          id?: string
+          insurance_doc_path?: string | null
+          is_online?: boolean
+          license_doc_path?: string | null
+          logo_url?: string | null
+          phone?: string | null
+          rejection_reason?: string | null
+          service_radius_km?: number
+          total_jobs?: number
+          updated_at?: string
+          user_id?: string
+          verification_status?: Database["public"]["Enums"]["verification_status"]
         }
         Relationships: []
       }
@@ -81,6 +228,8 @@ export type Database = {
     }
     Enums: {
       app_role: "customer" | "vendor" | "admin"
+      price_type: "fixed" | "hourly" | "quote"
+      verification_status: "pending" | "approved" | "rejected"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -209,6 +358,8 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["customer", "vendor", "admin"],
+      price_type: ["fixed", "hourly", "quote"],
+      verification_status: ["pending", "approved", "rejected"],
     },
   },
 } as const
