@@ -10,6 +10,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { STATUS_LABEL, STATUS_VARIANT, VENDOR_NEXT, VENDOR_NEXT_LABEL, ACTIVE_STATUSES, type BookingStatus } from "@/lib/booking";
 import { toast } from "sonner";
 import { ArrowLeft, MapPin, Calendar, FileText, Loader2, X, Truck } from "lucide-react";
+import ReviewSection from "@/components/ReviewSection";
 
 type Booking = {
   id: string;
@@ -228,6 +229,16 @@ export default function BookingDetail() {
 
         {booking.cancel_reason && (
           <p className="mt-3 text-xs text-muted-foreground">Cancellation reason: {booking.cancel_reason}</p>
+        )}
+
+        {booking.status === "completed" && booking.vendor_id && (
+          <div className="mt-6">
+            <ReviewSection
+              bookingId={booking.id}
+              vendorId={booking.vendor_id}
+              customerId={booking.customer_id}
+            />
+          </div>
         )}
       </main>
     </div>
