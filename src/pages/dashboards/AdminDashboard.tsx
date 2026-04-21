@@ -1,15 +1,33 @@
+import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import SiteHeader from "@/components/SiteHeader";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { Users, Store, Receipt, ShieldAlert } from "lucide-react";
-
-const tiles = [
-  { label: "Customers", value: "0", icon: Users },
-  { label: "Vendors", value: "0", icon: Store },
-  { label: "Transactions", value: "0", icon: Receipt },
-  { label: "Open disputes", value: "0", icon: ShieldAlert },
-];
+import { supabase } from "@/integrations/supabase/client";
 
 export default function AdminDashboard() {
+  const [pending, setPending] = useState<number>(0);
+  const [vendorCount, setVendorCount] = useState<number>(0);
+
+  useEffect(() => {
+    (async () => {
+      const [{ count: pendingC }, { count: allC }] = await Promise.all([
+        supabase.from("vendors").select("id", { count: "exact", head: true }).eq("verification_status", "pending"),
+        supabase.from("vendors").select("id", { count: "exact", head: true }),
+      ]);
+      setPending(pendingC ?? 0);
+      setVendorCount(allC ?? 0);
+    })();
+  }, []);
+
+  const tiles = [
+    { label: "Customers", value: "—", icon: Users },
+    { label: "Vendors", value: vendorCount, icon: Store },
+    { label: "Transactions", value: "0", icon: Receipt },
+    { label: "Pending approvals", value: pending, icon: ShieldAlert },
+  ];
+
   return (
     <div className="min-h-screen bg-gradient-subtle">
       <SiteHeader />
@@ -37,9 +55,18 @@ export default function AdminDashboard() {
         </section>
 
         <Card>
-          <CardHeader><CardTitle>Vendor approval queue</CardTitle></CardHeader>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle>Vendor approval queue</CardTitle>
+              <Button asChild variant="outline" size="sm">
+                <Link to="/admin/vendors">Open queue</Link>
+              </Button>
+            </div>
+          </CardHeader>
           <CardContent>
-            <p className="text-sm text-muted-foreground">No vendors awaiting verification.</p>
+            <p className="text-sm text-muted-foreground">
+              {pending === 0 ? "No vendors awaiting verification." : `${pending} vendor${pending === 1 ? "" : "s"} awaiting verification.`}
+            </p>
           </CardContent>
         </Card>
       </main>
