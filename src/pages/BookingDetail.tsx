@@ -108,7 +108,6 @@ export default function BookingDetail() {
   const isAssignedVendor = !!booking.vendors && booking.vendors.user_id === user?.id;
   const canCancel = isCustomer && ACTIVE_STATUSES.includes(booking.status) && booking.status !== "in_progress";
   const vendorNext = isAssignedVendor ? VENDOR_NEXT[booking.status] : undefined;
-  const isCompleteStep = vendorNext === "completed";
 
   const advance = async (next: BookingStatus) => {
     if (next === "completed") {
