@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Briefcase, DollarSign, Star, TrendingUp, Loader2, AlertCircle, CheckCircle2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import AvailabilityToggle from "@/components/AvailabilityToggle";
 
 type VendorRow = {
   id: string;
@@ -15,6 +16,7 @@ type VendorRow = {
   rejection_reason: string | null;
   total_jobs: number;
   avg_rating: number | null;
+  is_online: boolean;
 };
 
 const statusVariant = {
@@ -32,7 +34,7 @@ export default function VendorDashboard() {
     if (!user) return;
     supabase
       .from("vendors")
-      .select("id,business_name,verification_status,rejection_reason,total_jobs,avg_rating")
+      .select("id,business_name,verification_status,rejection_reason,total_jobs,avg_rating,is_online")
       .eq("user_id", user.id)
       .maybeSingle()
       .then(({ data }) => {
@@ -116,9 +118,16 @@ export default function VendorDashboard() {
 
         {vendor?.verification_status === "approved" && (
           <Card className="mb-6 border-success/40 bg-success/5">
-            <CardContent className="flex items-center gap-3 p-5 text-sm">
-              <CheckCircle2 className="h-5 w-5 text-success" />
-              <span className="font-medium">You're verified — start accepting jobs!</span>
+            <CardContent className="flex flex-wrap items-center justify-between gap-4 p-5 text-sm">
+              <div className="flex items-center gap-3">
+                <CheckCircle2 className="h-5 w-5 text-success" />
+                <span className="font-medium">You're verified — toggle availability to receive jobs.</span>
+              </div>
+              <AvailabilityToggle
+                vendorId={vendor.id}
+                initialOnline={vendor.is_online}
+                onChange={(o) => setVendor((v) => (v ? { ...v, is_online: o } : v))}
+              />
             </CardContent>
           </Card>
         )}

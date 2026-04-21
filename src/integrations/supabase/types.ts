@@ -119,6 +119,54 @@ export type Database = {
         }
         Relationships: []
       }
+      reviews: {
+        Row: {
+          booking_id: string
+          comment: string | null
+          created_at: string
+          customer_id: string
+          id: string
+          rating: number
+          updated_at: string
+          vendor_id: string
+        }
+        Insert: {
+          booking_id: string
+          comment?: string | null
+          created_at?: string
+          customer_id: string
+          id?: string
+          rating: number
+          updated_at?: string
+          vendor_id: string
+        }
+        Update: {
+          booking_id?: string
+          comment?: string | null
+          created_at?: string
+          customer_id?: string
+          id?: string
+          rating?: number
+          updated_at?: string
+          vendor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reviews_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: true
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reviews_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       service_categories: {
         Row: {
           created_at: string
@@ -335,6 +383,10 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      recompute_vendor_rating: {
+        Args: { _vendor_id: string }
+        Returns: undefined
       }
       search_vendors_for_job: {
         Args: { _category_id: string; _lat: number; _lng: number }
