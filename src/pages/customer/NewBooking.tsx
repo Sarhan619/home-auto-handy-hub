@@ -26,6 +26,8 @@ export default function NewBooking() {
   const categoryId = params.get("category");
   const vendorId = params.get("vendor");
   const mode = (params.get("mode") as "broadcast" | "direct") ?? (vendorId ? "direct" : "broadcast");
+  const quotedPrice = params.get("price") ? Number(params.get("price")) : null;
+  const priceType = (params.get("priceType") as "fixed" | "hourly" | "quote" | null) ?? null;
 
   const [category, setCategory] = useState<Category | null>(null);
   const [vendor, setVendor] = useState<Vendor | null>(null);
@@ -65,6 +67,7 @@ export default function NewBooking() {
         job_lng: location.lng,
         notes: notes.trim() || null,
         scheduled_for: scheduledFor ? new Date(scheduledFor).toISOString() : null,
+        quoted_price: quotedPrice,
       })
       .select("id")
       .single();
@@ -133,6 +136,26 @@ export default function NewBooking() {
               <Label className="mb-2 block">Job location</Label>
               <LocationPicker />
             </div>
+
+            {quotedPrice != null && priceType !== "quote" && (
+              <div className="rounded-lg border bg-muted/30 p-3 text-sm">
+                <p className="font-medium">
+                  Quoted price: ${quotedPrice.toFixed(2)}
+                  {priceType === "hourly" ? " /hr" : ""}
+                </p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  This is the vendor's listed rate. Final amount is collected by the vendor when the job is done. They may adjust with a note if scope changes.
+                </p>
+              </div>
+            )}
+            {priceType === "quote" && (
+              <div className="rounded-lg border bg-muted/30 p-3 text-sm">
+                <p className="font-medium">Quote on request</p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  The vendor will set a final price after assessing the job. Payment is collected on-site.
+                </p>
+              </div>
+            )}
 
             <div>
               <Label htmlFor="notes">Describe the job</Label>
