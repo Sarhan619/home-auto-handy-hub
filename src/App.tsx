@@ -9,6 +9,8 @@ import Auth from "./pages/Auth.tsx";
 import CustomerDashboard from "./pages/dashboards/CustomerDashboard.tsx";
 import VendorDashboard from "./pages/dashboards/VendorDashboard.tsx";
 import AdminDashboard from "./pages/dashboards/AdminDashboard.tsx";
+import VendorOnboarding from "./pages/vendor/VendorOnboarding.tsx";
+import AdminVendors from "./pages/admin/AdminVendors.tsx";
 import ProtectedRoute from "./components/ProtectedRoute.tsx";
 import { AuthProvider } from "./hooks/useAuth.tsx";
 
@@ -41,10 +43,26 @@ const App = () => (
               }
             />
             <Route
+              path="/vendor/onboarding"
+              element={
+                <ProtectedRoute requiredRole="vendor">
+                  <VendorOnboarding />
+                </ProtectedRoute>
+              }
+            />
+            <Route
               path="/admin"
               element={
                 <ProtectedRoute requiredRole="admin">
                   <AdminDashboard />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/vendors"
+              element={
+                <ProtectedRoute requiredRole="admin">
+                  <AdminVendors />
                 </ProtectedRoute>
               }
             />
