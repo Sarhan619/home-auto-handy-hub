@@ -24,7 +24,16 @@ type VendorRow = {
   distance_km: number;
   base_price: number | null;
   price_type: "fixed" | "hourly" | "quote";
+  service_description?: string | null;
 };
+
+function bulletPoints(text: string | null | undefined) {
+  return (text ?? "")
+    .split(/\r?\n/)
+    .map((line) => line.replace(/^[-•\s]+/, "").trim())
+    .filter(Boolean)
+    .slice(0, 3);
+}
 
 function formatPrice(v: VendorRow) {
   if (v.price_type === "quote" || v.base_price == null) return "Quote on request";
@@ -154,7 +163,16 @@ export default function CategoryVendors() {
                               {Number(v.distance_km).toFixed(1)} km away
                             </span>
                           </div>
-                          {v.bio && <p className="mt-2 line-clamp-2 max-w-md text-xs text-muted-foreground">{v.bio}</p>}
+                          {bulletPoints(v.service_description ?? v.bio).length > 0 && (
+                            <ul className="mt-2 max-w-md space-y-1 text-xs text-muted-foreground">
+                              {bulletPoints(v.service_description ?? v.bio).map((point) => (
+                                <li key={point} className="flex gap-2">
+                                  <span aria-hidden="true" className="mt-1 h-1.5 w-1.5 rounded-full bg-accent" />
+                                  <span>{point}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          )}
                         </div>
                       </div>
                       <div className="flex items-center justify-between gap-3 sm:flex-col sm:items-end">

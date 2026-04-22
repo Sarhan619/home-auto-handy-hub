@@ -10,7 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { STATUS_LABEL, STATUS_VARIANT, ACTIVE_STATUSES, type BookingStatus } from "@/lib/booking";
 import { toast } from "sonner";
-import { MapPin, Clock, Loader2, Zap } from "lucide-react";
+import { MapPin, Clock, Loader2, Phone, User, Zap } from "lucide-react";
 
 type Booking = {
   id: string;
@@ -19,6 +19,8 @@ type Booking = {
   job_lat: number;
   job_lng: number;
   notes: string | null;
+  customer_name: string | null;
+  customer_phone: string | null;
   created_at: string;
   dispatch_mode: "broadcast" | "direct";
   vendor_id: string | null;
@@ -45,7 +47,7 @@ export default function VendorJobs() {
     // RLS will return: assigned to this vendor + open broadcast jobs in vendor's categories
     supabase
       .from("bookings")
-      .select("id,status,job_address,job_lat,job_lng,notes,created_at,dispatch_mode,vendor_id,category_id,service_categories(name)")
+        .select("id,status,job_address,job_lat,job_lng,notes,customer_name,customer_phone,created_at,dispatch_mode,vendor_id,category_id,service_categories(name)")
       .order("created_at", { ascending: false })
       .then(({ data }) => {
         setBookings((data as unknown as Booking[]) ?? []);
@@ -132,6 +134,12 @@ export default function VendorJobs() {
                           <MapPin className="h-3 w-3" /> {b.job_address}
                         </p>
                         {b.notes && <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">{b.notes}</p>}
+                        {b.dispatch_mode === "direct" && (
+                          <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
+                            {b.customer_name && <span className="inline-flex items-center gap-1"><User className="h-3 w-3" /> {b.customer_name}</span>}
+                            {b.customer_phone && <span className="inline-flex items-center gap-1"><Phone className="h-3 w-3" /> {b.customer_phone}</span>}
+                          </div>
+                        )}
                         <p className="mt-1 inline-flex items-center gap-1 text-xs text-muted-foreground">
                           <Clock className="h-3 w-3" /> {new Date(b.created_at).toLocaleString()}
                         </p>
