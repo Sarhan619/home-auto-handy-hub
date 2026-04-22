@@ -1,181 +1,111 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import SiteHeader from "@/components/SiteHeader";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { iconForCategory } from "@/lib/categoryIcons";
+import { STATUS_LABEL, STATUS_VARIANT, ACTIVE_STATUSES, type BookingStatus } from "@/lib/booking";
 
 type Cat = { id: string; name: string; slug: string };
-
-type Vendor = {
+type ActiveBooking = {
   id: string;
-  business_name: string;
-  price: number;
-  description: string;
+  status: BookingStatus;
+  job_address: string;
+  service_categories: { name: string } | null;
 };
 
 export default function CustomerDashboard() {
   const { user } = useAuth();
-
   const [categories, setCategories] = useState<Cat[]>([]);
-  const [vendors, setVendors] = useState<Vendor[]>([]);
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-  const [selectedVendor, setSelectedVendor] = useState<Vendor | null>(null);
-
-  const [form, setForm] = useState({
-    name: "",
-    phone: "",
-    address: "",
-    description: "",
-  });
-
+  const [active, setActive] = useState<ActiveBooking[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    supabase
-      .from("service_categories")
-      .select("id,name,slug")
-      .eq("is_active", true)
-      .then(({ data }) => {
-        setCategories(data || []);
-        setLoading(false);
-      });
-  }, []);
-
-  // Fetch vendors when category is selected
-  const loadVendors = async (slug: string) => {
-    setSelectedCategory(slug);
-    setSelectedVendor(null);
-
-    const { data } = await supabase
-      .from("vendors")
-      .select("id,business_name,price,description")
-      .eq("category_slug", slug)
-      .eq("verification_status", "approved");
-
-    setVendors(data || []);
-  };
-
-  // Submit booking
-  const handleSubmit = async () => {
-    if (!user || !selectedVendor) return;
-
-    await supabase.from("bookings").insert([
-      {
-        vendor_id: selectedVendor.id,
-        customer_id: user.id,
-        customer_name: form.name,
-        phone: form.phone,
-        job_address: form.address,
-        description: form.description,
-        status: "pending",
-      },
-    ]);
-
-    alert("Request sent!");
-    setSelectedVendor(null);
-    setSelectedCategory(null);
-  };
+    if (!user) return;
+    Promise.all([
+      supabase.from("service_categories").select("id,name,slug").eq("is_active", true).order("name").limit(6),
+      supabase
+        .from("bookings")
+        .select("id,status,job_address,service_categories(name)")
+        .eq("customer_id", user.id)
+        .in("status", ACTIVE_STATUSES)
+        .order("created_at", { ascending: false }),
+    ]).then(([cats, bks]) => {
+      setCategories((cats.data as Cat[]) ?? []);
+      setActive((bks.data as unknown as ActiveBooking[]) ?? []);
+      setLoading(false);
+    });
+  }, [user]);
 
   return (
     <div className="min-h-screen bg-gradient-subtle">
       <SiteHeader />
-
       <main className="container py-10">
-        <h1 className="text-3xl font-bold mb-6">Find Services</h1>
+        <div className="mb-8">
+          <p className="text-sm font-medium text-primary">Customer</p>
+          <h1 className="text-3xl font-bold tracking-tight">Welcome{user?.email ? , ${user.email.split("@")[0]} : ""}</h1>
+          <p className="mt-1 text-muted-foreground">Find trusted local pros for any home or auto job.</p>
+        </div>
 
-        {/* STEP 1: Categories */}
-        {!selectedCategory && (
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+        <section className="mb-10">
+          <div className="mb-4 flex items-center justify-between">
+            <h2 className="text-lg font-semibold">Browse services</h2>
+            <Button asChild variant="link" className="px-0"><Link to="/services">See all</Link></Button>
+          </div>
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
             {loading
               ? Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-28" />)
               : categories.map((cat) => {
                   const Icon = iconForCategory(cat.slug);
                   return (
-                    <Card
-                      key={cat.id}
-                      onClick={() => loadVendors(cat.slug)}
-                      className="cursor-pointer hover:shadow-lg"
-                    >
-                      <CardContent className="flex flex-col items-center p-6 gap-2">
-                        <Icon className="h-6 w-6 text-primary" />
-                        <span>{cat.name}</span>
-                      </CardContent>
-                    </Card>
+                    <Link key={cat.id} to={/services/${cat.slug}}>
+                      <Card className="cursor-pointer shadow-card transition-[var(--transition-smooth)] hover:-translate-y-1 hover:shadow-elegant">
+                        <CardContent className="flex flex-col items-center gap-3 p-6">
+                          <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
+                            <Icon className="h-6 w-6 text-primary" />
+                          </div>
+                          <span className="text-sm font-medium text-center">{cat.name}</span>
+                        </CardContent>
+                      </Card>
+                    </Link>
                   );
                 })}
           </div>
-        )}
+        </section>
 
-        {/* STEP 2: Vendors */}
-        {selectedCategory && !selectedVendor && (
-          <div>
-            <Button variant="outline" onClick={() => setSelectedCategory(null)} className="mb-4">
-              ← Back
-            </Button>
-
-            <h2 className="text-xl font-bold mb-4 capitalize">{selectedCategory} Vendors</h2>
-
-            <div className="grid md:grid-cols-3 gap-4">
-              {vendors.map((v) => (
-                <Card key={v.id}>
-                  <CardContent className="p-4 space-y-2">
-                    <h3 className="font-semibold">{v.business_name}</h3>
-                    <p className="text-sm text-muted-foreground">{v.description}</p>
-                    <p className="font-bold">${v.price}</p>
-
-                    <Button onClick={() => setSelectedVendor(v)}>
-                      Select
-                    </Button>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* STEP 3: Booking Form */}
-        {selectedVendor && (
-          <div className="max-w-md">
-            <Button variant="outline" onClick={() => setSelectedVendor(null)} className="mb-4">
-              ← Back
-            </Button>
-
-            <h2 className="text-xl font-bold mb-4">
-              Booking: {selectedVendor.business_name}
-            </h2>
-
-            <input
-              className="w-full mb-3 p-2 border rounded"
-              placeholder="Name"
-              onChange={(e) => setForm({ ...form, name: e.target.value })}
-            />
-
-            <input
-              className="w-full mb-3 p-2 border rounded"
-              placeholder="Phone"
-              onChange={(e) => setForm({ ...form, phone: e.target.value })}
-            />
-
-            <input
-              className="w-full mb-3 p-2 border rounded"
-              placeholder="Address"
-              onChange={(e) => setForm({ ...form, address: e.target.value })}
-            />
-
-            <textarea
-              className="w-full mb-3 p-2 border rounded"
-              placeholder="Describe your job"
-              onChange={(e) => setForm({ ...form, description: e.target.value })}
-            />
-
-            <Button onClick={handleSubmit} className="w-full">
-              Submit Request
-            </Button>
-          </div>
-        )}
+        <section className="grid gap-6 md:grid-cols-2">
+          <Card>
+            <CardHeader><CardTitle>Active bookings</CardTitle></CardHeader>
+            <CardContent className="space-y-3">
+              {active.length === 0 ? (
+                <p className="text-sm text-muted-foreground">No active bookings. Pick a service above to get started.</p>
+              ) : (
+                active.slice(0, 4).map((b) => (
+                  <Link key={b.id} to={/bookings/${b.id}} className="block">
+                    <div className="flex items-center justify-between rounded-lg border border-border p-3 transition-colors hover:bg-muted/50">
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-medium">{b.service_categories?.name ?? "Service"}</p>
+                        <p className="truncate text-xs text-muted-foreground">{b.job_address}</p>
+                      </div>
+                      <Badge variant={STATUS_VARIANT[b.status]}>{STATUS_LABEL[b.status]}</Badge>
+                    </div>
+                  </Link>
+                ))
+              )}
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader><CardTitle>Recent activity</CardTitle></CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground">Your booking history will appear here.</p>
+              <Button asChild variant="link" className="mt-2 px-0"><Link to="/bookings">View all</Link></Button>
+            </CardContent>
+          </Card>
+        </section>
       </main>
     </div>
   );
