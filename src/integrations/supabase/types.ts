@@ -24,6 +24,8 @@ export type Database = {
           completed_at: string | null
           created_at: string
           customer_id: string
+          customer_name: string | null
+          customer_phone: string | null
           dispatch_mode: Database["public"]["Enums"]["dispatch_mode"]
           final_price: number | null
           id: string
@@ -51,6 +53,8 @@ export type Database = {
           completed_at?: string | null
           created_at?: string
           customer_id: string
+          customer_name?: string | null
+          customer_phone?: string | null
           dispatch_mode?: Database["public"]["Enums"]["dispatch_mode"]
           final_price?: number | null
           id?: string
@@ -78,6 +82,8 @@ export type Database = {
           completed_at?: string | null
           created_at?: string
           customer_id?: string
+          customer_name?: string | null
+          customer_phone?: string | null
           dispatch_mode?: Database["public"]["Enums"]["dispatch_mode"]
           final_price?: number | null
           id?: string
@@ -435,6 +441,8 @@ export type Database = {
           completed_at: string | null
           created_at: string
           customer_id: string
+          customer_name: string | null
+          customer_phone: string | null
           dispatch_mode: Database["public"]["Enums"]["dispatch_mode"]
           final_price: number | null
           id: string
@@ -510,6 +518,8 @@ export type Database = {
           completed_at: string | null
           created_at: string
           customer_id: string
+          customer_name: string | null
+          customer_phone: string | null
           dispatch_mode: Database["public"]["Enums"]["dispatch_mode"]
           final_price: number | null
           id: string
