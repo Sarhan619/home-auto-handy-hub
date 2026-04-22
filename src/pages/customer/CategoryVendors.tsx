@@ -37,6 +37,12 @@ type VendorRow = {
   vendor_services: VendorService[] | null;
 };
 
+type VendorCardRow = VendorRow & {
+  activeServices: VendorService[];
+  featuredService: VendorService | null;
+  computedDistance: number | null;
+};
+
 function distanceKm(lat1: number, lng1: number, lat2: number, lng2: number) {
   const toRad = (value: number) => (value * Math.PI) / 180;
   const dLat = toRad(lat2 - lat1);
@@ -56,9 +62,9 @@ function bulletPoints(text: string | null | undefined) {
     .slice(0, 3);
 }
 
-function formatPrice(v: VendorRow) {
-  if (v.price_type === "quote" || v.base_price == null) return "Quote on request";
-  return `$${Number(v.base_price).toFixed(0)}${v.price_type === "hourly" ? "/hr" : ""}`;
+function formatPrice(service: VendorService | null) {
+  if (!service || service.price_type === "quote" || service.base_price == null) return "Quote on request";
+  return `$${Number(service.base_price).toFixed(0)}${service.price_type === "hourly" ? "/hr" : ""}`;
 }
 
 export default function CategoryVendors() {
@@ -107,7 +113,7 @@ export default function CategoryVendors() {
     return undefined;
   }, [category]);
 
-  const visibleVendors = useMemo(() => {
+  const visibleVendors = useMemo<VendorCardRow[]>(() => {
     if (!category) return [];
 
     return vendors
@@ -215,7 +221,7 @@ export default function CategoryVendors() {
                 value={maxDistance}
                 disabled={!location}
                 onChange={(event) => setMaxDistance(Number(event.target.value))}
-                className="w-full accent-[hsl(var(--primary))] disabled:cursor-not-allowed disabled:opacity-50"
+                className="w-full disabled:cursor-not-allowed disabled:opacity-50"
               />
             </div>
           </div>
@@ -229,11 +235,6 @@ export default function CategoryVendors() {
             </p>
           </div>
         </div>
-
-        <div className="mb-6 max-w-xl">
-          <LocationPicker />
-        </div>
-
         <div className="space-y-4">
             {loading
               ? Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-72" />)
@@ -246,7 +247,7 @@ export default function CategoryVendors() {
                 </Card>
               )
               : visibleVendors.map((v) => (
-                  <Card key={v.vendor_id} className="shadow-card transition-shadow hover:shadow-elegant">
+                  <Card key={v.id} className="shadow-card transition-shadow hover:shadow-elegant">
                     <CardContent className="grid gap-5 p-5 lg:grid-cols-[220px_minmax(0,1fr)_auto] lg:items-center">
                       <div className="overflow-hidden rounded-lg border bg-muted/20">
                         <AspectRatio ratio={4 / 3}>
@@ -306,7 +307,7 @@ export default function CategoryVendors() {
 
                       <div className="flex items-center justify-between gap-3 lg:flex-col lg:items-end">
                         <div className="text-right">
-                          <p className="text-sm font-semibold">{formatPrice({ ...v, ...v.featuredService!, vendor_id: v.id, distance_km: v.computedDistance ?? 0, service_description: v.featuredService?.description ?? null })}</p>
+                          <p className="text-sm font-semibold">{formatPrice(v.featuredService)}</p>
                           <p className="mt-1 text-xs text-muted-foreground">{v.featuredService?.price_type === "quote" ? "Final quote after review" : "Listed starting price"}</p>
                         </div>
                         <Button asChild size="sm">
