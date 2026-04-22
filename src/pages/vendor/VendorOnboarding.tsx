@@ -14,6 +14,12 @@ import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 
 type Category = { id: string; name: string; slug: string };
+type ServiceDraft = {
+  categoryId: string;
+  priceType: "fixed" | "hourly" | "quote";
+  basePrice: string;
+  description: string;
+};
 type Vendor = {
   id: string;
   business_name: string;
@@ -41,6 +47,7 @@ export default function VendorOnboarding() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [vendor, setVendor] = useState<Vendor | null>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [services, setServices] = useState<Record<string, ServiceDraft>>({});
 
   // Form state
   const [businessName, setBusinessName] = useState("");
@@ -68,9 +75,22 @@ export default function VendorOnboarding() {
         setAddress(v.data.base_address ?? "");
         const offerings = await supabase
           .from("vendor_services")
-          .select("category_id")
+          .select("category_id,price_type,base_price,description")
           .eq("vendor_id", v.data.id);
-        if (offerings.data) setSelected(new Set(offerings.data.map((r) => r.category_id)));
+        if (offerings.data) {
+          setSelected(new Set(offerings.data.map((r) => r.category_id)));
+          setServices(
+            offerings.data.reduce<Record<string, ServiceDraft>>((acc, row) => {
+              acc[row.category_id] = {
+                categoryId: row.category_id,
+                priceType: row.price_type,
+                basePrice: row.base_price != null ? String(row.base_price) : "",
+                description: row.description ?? "",
+              };
+              return acc;
+            }, {})
+          );
+        }
       }
       setLoading(false);
     })();
@@ -79,9 +99,28 @@ export default function VendorOnboarding() {
   const toggleCategory = (id: string) => {
     setSelected((prev) => {
       const next = new Set(prev);
-      next.has(id) ? next.delete(id) : next.add(id);
+      const has = next.has(id);
+      if (has) next.delete(id);
+      else next.add(id);
       return next;
     });
+    setServices((prev) => {
+      if (prev[id]) return prev;
+      return {
+        ...prev,
+        [id]: { categoryId: id, priceType: "quote", basePrice: "", description: "" },
+      };
+    });
+  };
+
+  const updateService = (categoryId: string, patch: Partial<ServiceDraft>) => {
+    setServices((prev) => ({
+      ...prev,
+      [categoryId]: {
+        ...(prev[categoryId] ?? { categoryId, priceType: "quote", basePrice: "", description: "" }),
+        ...patch,
+      },
+    }));
   };
 
   const uploadDoc = async (file: File, kind: "license" | "insurance") => {
@@ -95,6 +134,10 @@ export default function VendorOnboarding() {
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
+    if (selected.size === 0) {
+      toast.error("Select at least one service category.");
+      return;
+    }
     setSaving(true);
     try {
       let licensePath = vendor?.license_doc_path ?? null;
@@ -142,7 +185,12 @@ export default function VendorOnboarding() {
         const rows = Array.from(selected).map((category_id) => ({
           vendor_id: vendorId!,
           category_id,
-          price_type: "quote" as const,
+          price_type: services[category_id]?.priceType ?? "quote",
+          base_price:
+            services[category_id]?.priceType === "quote"
+              ? null
+              : Number(services[category_id]?.basePrice || 0),
+          description: services[category_id]?.description.trim() || null,
         }));
         const { error } = await supabase.from("vendor_services").insert(rows);
         if (error) throw error;
@@ -233,9 +281,9 @@ export default function VendorOnboarding() {
           <Card>
             <CardHeader>
               <CardTitle>Services you offer</CardTitle>
-              <CardDescription>Pick all that apply. You can refine pricing later.</CardDescription>
+              <CardDescription>Choose categories, then add pricing and short bullet-point service details for each one.</CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="space-y-5">
               <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
                 {categories.map((c) => {
                   const checked = selected.has(c.id);
@@ -253,6 +301,75 @@ export default function VendorOnboarding() {
                   );
                 })}
               </div>
+
+              {Array.from(selected).length > 0 && (
+                <div className="space-y-4 border-t pt-5">
+                  {categories
+                    .filter((c) => selected.has(c.id))
+                    .map((category) => {
+                      const service = services[category.id] ?? {
+                        categoryId: category.id,
+                        priceType: "quote" as const,
+                        basePrice: "",
+                        description: "",
+                      };
+
+                      return (
+                        <div key={category.id} className="rounded-lg border bg-muted/20 p-4">
+                          <div className="mb-3 flex items-center justify-between gap-3">
+                            <p className="font-medium">{category.name}</p>
+                            <Badge variant="outline" className="capitalize">{service.priceType}</Badge>
+                          </div>
+
+                          <div className="grid gap-4 sm:grid-cols-[180px_minmax(0,1fr)]">
+                            <div className="space-y-2">
+                              <Label htmlFor={`price-type-${category.id}`}>Pricing</Label>
+                              <select
+                                id={`price-type-${category.id}`}
+                                value={service.priceType}
+                                onChange={(e) => updateService(category.id, { priceType: e.target.value as ServiceDraft["priceType"] })}
+                                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                              >
+                                <option value="quote">Quote on request</option>
+                                <option value="fixed">Fixed price</option>
+                                <option value="hourly">Hourly rate</option>
+                              </select>
+                            </div>
+
+                            {service.priceType !== "quote" && (
+                              <div className="space-y-2">
+                                <Label htmlFor={`base-price-${category.id}`}>
+                                  {service.priceType === "hourly" ? "Hourly rate" : "Starting price"}
+                                </Label>
+                                <Input
+                                  id={`base-price-${category.id}`}
+                                  type="number"
+                                  min={0}
+                                  step="0.01"
+                                  value={service.basePrice}
+                                  onChange={(e) => updateService(category.id, { basePrice: e.target.value })}
+                                  placeholder={service.priceType === "hourly" ? "95" : "150"}
+                                />
+                              </div>
+                            )}
+                          </div>
+
+                          <div className="mt-4 space-y-2">
+                            <Label htmlFor={`description-${category.id}`}>Service highlights</Label>
+                            <Textarea
+                              id={`description-${category.id}`}
+                              rows={4}
+                              value={service.description}
+                              onChange={(e) => updateService(category.id, { description: e.target.value.slice(0, 500) })}
+                              placeholder={"• Mobile service\n• Same-day availability\n• Parts and labor explained upfront"}
+                              maxLength={500}
+                            />
+                          </div>
+                        </div>
+                      );
+                    })}
+                </div>
+              )}
             </CardContent>
           </Card>
 
