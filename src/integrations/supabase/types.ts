@@ -24,6 +24,8 @@ export type Database = {
           completed_at: string | null
           created_at: string
           customer_id: string
+          customer_name: string | null
+          customer_phone: string | null
           dispatch_mode: Database["public"]["Enums"]["dispatch_mode"]
           final_price: number | null
           id: string
@@ -51,6 +53,8 @@ export type Database = {
           completed_at?: string | null
           created_at?: string
           customer_id: string
+          customer_name?: string | null
+          customer_phone?: string | null
           dispatch_mode?: Database["public"]["Enums"]["dispatch_mode"]
           final_price?: number | null
           id?: string
@@ -78,6 +82,8 @@ export type Database = {
           completed_at?: string | null
           created_at?: string
           customer_id?: string
+          customer_name?: string | null
+          customer_phone?: string | null
           dispatch_mode?: Database["public"]["Enums"]["dispatch_mode"]
           final_price?: number | null
           id?: string
@@ -435,6 +441,8 @@ export type Database = {
           completed_at: string | null
           created_at: string
           customer_id: string
+          customer_name: string | null
+          customer_phone: string | null
           dispatch_mode: Database["public"]["Enums"]["dispatch_mode"]
           final_price: number | null
           id: string
@@ -490,6 +498,7 @@ export type Database = {
           is_online: boolean
           logo_url: string
           price_type: Database["public"]["Enums"]["price_type"]
+          service_description: string
           total_jobs: number
           vendor_id: string
         }[]
@@ -510,6 +519,8 @@ export type Database = {
           completed_at: string | null
           created_at: string
           customer_id: string
+          customer_name: string | null
+          customer_phone: string | null
           dispatch_mode: Database["public"]["Enums"]["dispatch_mode"]
           final_price: number | null
           id: string

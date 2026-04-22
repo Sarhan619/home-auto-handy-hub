@@ -16,6 +16,7 @@ import { Loader2, Zap, UserCheck } from "lucide-react";
 
 type Category = { id: string; name: string };
 type Vendor = { id: string; business_name: string };
+type Profile = { full_name: string | null; phone: string | null };
 
 export default function NewBooking() {
   const [params] = useSearchParams();
@@ -31,6 +32,8 @@ export default function NewBooking() {
 
   const [category, setCategory] = useState<Category | null>(null);
   const [vendor, setVendor] = useState<Vendor | null>(null);
+  const [customerName, setCustomerName] = useState("");
+  const [customerPhone, setCustomerPhone] = useState("");
   const [notes, setNotes] = useState("");
   const [scheduledFor, setScheduledFor] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -47,17 +50,49 @@ export default function NewBooking() {
       .then(({ data }) => setVendor(data as Vendor | null));
   }, [vendorId]);
 
+  useEffect(() => {
+    if (!user) return;
+    supabase.from("profiles").select("full_name,phone").eq("id", user.id).maybeSingle()
+      .then(({ data }) => {
+        const profile = data as Profile | null;
+        if (!profile) return;
+        setCustomerName(profile.full_name ?? "");
+        setCustomerPhone(profile.phone ?? "");
+      });
+  }, [user]);
+
   const submit = async () => {
     if (!user || !categoryId) return;
+    const trimmedName = customerName.trim();
+    const trimmedPhone = customerPhone.trim();
     if (!location) {
       toast.error("Please set your job location.");
       return;
     }
+    if (!trimmedName) {
+      toast.error("Please enter your name.");
+      return;
+    }
+    if (!trimmedPhone) {
+      toast.error("Please enter your phone number.");
+      return;
+    }
     setSubmitting(true);
+    const { error: profileError } = await supabase
+      .from("profiles")
+      .update({ full_name: trimmedName, phone: trimmedPhone })
+      .eq("id", user.id);
+    if (profileError) {
+      setSubmitting(false);
+      toast.error(profileError.message);
+      return;
+    }
     const { data, error } = await supabase
       .from("bookings")
       .insert({
         customer_id: user.id,
+        customer_name: trimmedName,
+        customer_phone: trimmedPhone,
         category_id: categoryId,
         vendor_id: mode === "direct" ? vendorId : null,
         dispatch_mode: mode,
@@ -132,8 +167,31 @@ export default function NewBooking() {
         <Card>
           <CardHeader><CardTitle className="text-lg">Job details</CardTitle></CardHeader>
           <CardContent className="space-y-5">
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div>
+                <Label htmlFor="customer-name">Your name</Label>
+                <Input
+                  id="customer-name"
+                  value={customerName}
+                  onChange={(e) => setCustomerName(e.target.value.slice(0, 100))}
+                  placeholder="Full name"
+                  maxLength={100}
+                />
+              </div>
+              <div>
+                <Label htmlFor="customer-phone">Phone number</Label>
+                <Input
+                  id="customer-phone"
+                  value={customerPhone}
+                  onChange={(e) => setCustomerPhone(e.target.value.slice(0, 30))}
+                  placeholder="Best number for updates"
+                  maxLength={30}
+                />
+              </div>
+            </div>
+
             <div>
-              <Label className="mb-2 block">Job location</Label>
+              <Label className="mb-2 block">Service address</Label>
               <LocationPicker />
             </div>
 

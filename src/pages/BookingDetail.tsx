@@ -9,7 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { STATUS_LABEL, STATUS_VARIANT, VENDOR_NEXT, VENDOR_NEXT_LABEL, ACTIVE_STATUSES, type BookingStatus } from "@/lib/booking";
 import { toast } from "sonner";
-import { ArrowLeft, MapPin, Calendar, FileText, Loader2, X, Truck } from "lucide-react";
+import { ArrowLeft, MapPin, Calendar, FileText, Loader2, X, Truck, Phone, User } from "lucide-react";
 import ReviewSection from "@/components/ReviewSection";
 import CompleteJobDialog from "@/components/CompleteJobDialog";
 import { PAYMENT_METHOD_LABEL, formatCurrency } from "@/lib/payment";
@@ -33,6 +33,8 @@ type Booking = {
   cancelled_at: string | null;
   cancel_reason: string | null;
   created_at: string;
+  customer_name: string | null;
+  customer_phone: string | null;
   quoted_price: number | null;
   final_price: number | null;
   price_adjustment_note: string | null;
@@ -212,6 +214,27 @@ export default function BookingDetail() {
               </div>
             )}
             <Separator />
+            {!isCustomer && (
+              <>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div className="flex items-start gap-3">
+                    <User className="mt-0.5 h-4 w-4 text-muted-foreground" />
+                    <div>
+                      <p className="text-xs text-muted-foreground">Customer name</p>
+                      <p className="text-sm font-medium">{booking.customer_name ?? "Not provided"}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <Phone className="mt-0.5 h-4 w-4 text-muted-foreground" />
+                    <div>
+                      <p className="text-xs text-muted-foreground">Customer phone</p>
+                      <p className="text-sm font-medium">{booking.customer_phone ?? "Not provided"}</p>
+                    </div>
+                  </div>
+                </div>
+                <Separator />
+              </>
+            )}
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs text-muted-foreground">{isCustomer ? "Vendor" : "Customer"}</p>

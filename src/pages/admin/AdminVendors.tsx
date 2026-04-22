@@ -21,7 +21,21 @@ type VendorRow = {
   license_doc_path: string | null;
   insurance_doc_path: string | null;
   created_at: string;
+  vendor_services?: { id: string; price_type: "fixed" | "hourly" | "quote"; base_price: number | null; description: string | null; service_categories: { name: string } | null }[];
 };
+
+function formatServicePrice(priceType: "fixed" | "hourly" | "quote", basePrice: number | null) {
+  if (priceType === "quote" || basePrice == null) return "Quote on request";
+  return `$${Number(basePrice).toFixed(0)}${priceType === "hourly" ? "/hr" : ""}`;
+}
+
+function bulletPoints(text: string | null | undefined) {
+  return (text ?? "")
+    .split(/\r?\n/)
+    .map((line) => line.replace(/^[-•\s]+/, "").trim())
+    .filter(Boolean)
+    .slice(0, 4);
+}
 
 type Status = "pending" | "approved" | "rejected";
 
@@ -43,7 +57,7 @@ export default function AdminVendors() {
     setLoading(true);
     const { data, error } = await supabase
       .from("vendors")
-      .select("*")
+      .select("*,vendor_services(id,price_type,base_price,description,service_categories(name))")
       .eq("verification_status", status)
       .order("created_at", { ascending: false });
     if (error) toast.error(error.message);
@@ -155,6 +169,32 @@ export default function AdminVendors() {
                       </Button>
                     )}
                   </div>
+
+                  {v.vendor_services && v.vendor_services.length > 0 && (
+                    <div className="space-y-3 rounded-lg border bg-muted/20 p-4">
+                      <p className="text-sm font-medium">Offered services</p>
+                      <div className="space-y-3">
+                        {v.vendor_services.map((service) => (
+                          <div key={service.id} className="rounded-md border bg-background p-3">
+                            <div className="flex flex-wrap items-center justify-between gap-2">
+                              <p className="text-sm font-semibold">{service.service_categories?.name ?? "Service"}</p>
+                              <Badge variant="outline">{formatServicePrice(service.price_type, service.base_price)}</Badge>
+                            </div>
+                            {bulletPoints(service.description).length > 0 && (
+                              <ul className="mt-2 space-y-1 text-xs text-muted-foreground">
+                                {bulletPoints(service.description).map((point) => (
+                                  <li key={point} className="flex gap-2">
+                                    <span aria-hidden="true" className="mt-1 h-1.5 w-1.5 rounded-full bg-accent" />
+                                    <span>{point}</span>
+                                  </li>
+                                ))}
+                              </ul>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
 
                   {tab === "pending" && (
                     <div className="flex justify-end gap-2 pt-2">
