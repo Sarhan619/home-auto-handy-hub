@@ -78,6 +78,15 @@ export default function NewBooking() {
       return;
     }
     setSubmitting(true);
+    const { error: profileError } = await supabase
+      .from("profiles")
+      .update({ full_name: trimmedName, phone: trimmedPhone })
+      .eq("id", user.id);
+    if (profileError) {
+      setSubmitting(false);
+      toast.error(profileError.message);
+      return;
+    }
     const { data, error } = await supabase
       .from("bookings")
       .insert({
