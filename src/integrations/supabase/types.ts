@@ -498,6 +498,7 @@ export type Database = {
           is_online: boolean
           logo_url: string
           price_type: Database["public"]["Enums"]["price_type"]
+          service_description: string
           total_jobs: number
           vendor_id: string
         }[]
