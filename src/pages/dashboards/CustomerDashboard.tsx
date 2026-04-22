@@ -23,6 +23,7 @@ export default function CustomerDashboard() {
   const [categories, setCategories] = useState<Cat[]>([]);
   const [active, setActive] = useState<ActiveBooking[]>([]);
   const [loading, setLoading] = useState(true);
+  const firstName = user?.email?.split("@")[0];
 
   useEffect(() => {
     if (!user) return;
@@ -47,7 +48,7 @@ export default function CustomerDashboard() {
       <main className="container py-10">
         <div className="mb-8">
           <p className="text-sm font-medium text-primary">Customer</p>
-          <h1 className="text-3xl font-bold tracking-tight">Welcome{user?.email ? , ${user.email.split("@")[0]} : ""}</h1>
+          <h1 className="text-3xl font-bold tracking-tight">Welcome{firstName ? `, ${firstName}` : ""}</h1>
           <p className="mt-1 text-muted-foreground">Find trusted local pros for any home or auto job.</p>
         </div>
 
@@ -62,7 +63,7 @@ export default function CustomerDashboard() {
               : categories.map((cat) => {
                   const Icon = iconForCategory(cat.slug);
                   return (
-                    <Link key={cat.id} to={/services/${cat.slug}}>
+                     <Link key={cat.id} to={`/services/${cat.slug}`}>
                       <Card className="cursor-pointer shadow-card transition-[var(--transition-smooth)] hover:-translate-y-1 hover:shadow-elegant">
                         <CardContent className="flex flex-col items-center gap-3 p-6">
                           <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
@@ -85,7 +86,7 @@ export default function CustomerDashboard() {
                 <p className="text-sm text-muted-foreground">No active bookings. Pick a service above to get started.</p>
               ) : (
                 active.slice(0, 4).map((b) => (
-                  <Link key={b.id} to={/bookings/${b.id}} className="block">
+                   <Link key={b.id} to={`/bookings/${b.id}`} className="block">
                     <div className="flex items-center justify-between rounded-lg border border-border p-3 transition-colors hover:bg-muted/50">
                       <div className="min-w-0">
                         <p className="truncate text-sm font-medium">{b.service_categories?.name ?? "Service"}</p>
