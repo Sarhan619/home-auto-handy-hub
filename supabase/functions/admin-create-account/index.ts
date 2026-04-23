@@ -189,47 +189,52 @@ serve(async (req) => {
 
     const userId = createdUser.user.id;
 
-    const { error: profileError } = await adminClient
-      .from("profiles")
-      .update({ full_name: payload.fullName, phone: payload.phone ?? null })
-      .eq("id", userId);
+    try {
+      const { error: profileError } = await adminClient
+        .from("profiles")
+        .update({ full_name: payload.fullName, phone: payload.phone ?? null })
+        .eq("id", userId);
 
-    if (profileError) throw profileError;
+      if (profileError) throw profileError;
 
-    if (payload.role === "vendor" && payload.vendor) {
-      const vendorInsert = {
-        user_id: userId,
-        business_name: payload.vendor.businessName,
-        bio: payload.vendor.bio ?? null,
-        phone: payload.vendor.primaryPhone ?? payload.phone ?? null,
-        base_address: payload.vendor.baseAddress ?? null,
-        service_radius_km: payload.vendor.serviceRadiusKm,
-        contact_numbers: payload.vendor.contactNumbers,
-        license_doc_path: payload.vendor.licenseDocPath ?? null,
-        government_id_doc_path: payload.vendor.governmentIdDocPath ?? null,
-        insurance_doc_path: payload.vendor.insuranceDocPath ?? null,
-        verification_status: payload.vendor.verificationStatus ?? "pending",
-      };
+      if (payload.role === "vendor" && payload.vendor) {
+        const vendorInsert = {
+          user_id: userId,
+          business_name: payload.vendor.businessName,
+          bio: payload.vendor.bio ?? null,
+          phone: payload.vendor.primaryPhone ?? payload.phone ?? null,
+          base_address: payload.vendor.baseAddress ?? null,
+          service_radius_km: payload.vendor.serviceRadiusKm,
+          contact_numbers: payload.vendor.contactNumbers,
+          license_doc_path: payload.vendor.licenseDocPath ?? null,
+          government_id_doc_path: payload.vendor.governmentIdDocPath ?? null,
+          insurance_doc_path: payload.vendor.insuranceDocPath ?? null,
+          verification_status: payload.vendor.verificationStatus ?? "pending",
+        };
 
-      const { data: vendorRow, error: vendorError } = await adminClient
-        .from("vendors")
-        .insert(vendorInsert)
-        .select("id")
-        .single();
+        const { data: vendorRow, error: vendorError } = await adminClient
+          .from("vendors")
+          .insert(vendorInsert)
+          .select("id")
+          .single();
 
-      if (vendorError || !vendorRow) throw vendorError ?? new Error("Unable to create vendor profile");
+        if (vendorError || !vendorRow) throw vendorError ?? new Error("Unable to create vendor profile");
 
-      const { error: servicesError } = await adminClient.from("vendor_services").insert(
-        payload.vendor.services.map((service) => ({
-          vendor_id: vendorRow.id,
-          category_id: service.categoryId,
-          price_type: service.priceType,
-          base_price: service.basePrice,
-          description: service.description,
-        })),
-      );
+        const { error: servicesError } = await adminClient.from("vendor_services").insert(
+          payload.vendor.services.map((service) => ({
+            vendor_id: vendorRow.id,
+            category_id: service.categoryId,
+            price_type: service.priceType,
+            base_price: service.basePrice,
+            description: service.description,
+          })),
+        );
 
-      if (servicesError) throw servicesError;
+        if (servicesError) throw servicesError;
+      }
+    } catch (error) {
+      await adminClient.auth.admin.deleteUser(userId);
+      throw error;
     }
 
     return new Response(JSON.stringify({ userId, role: payload.role }), {
