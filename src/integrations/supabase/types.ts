@@ -367,7 +367,9 @@ export type Database = {
           base_lng: number | null
           bio: string | null
           business_name: string
+          contact_numbers: string[]
           created_at: string
+          government_id_doc_path: string | null
           id: string
           insurance_doc_path: string | null
           is_online: boolean
@@ -388,7 +390,9 @@ export type Database = {
           base_lng?: number | null
           bio?: string | null
           business_name: string
+          contact_numbers?: string[]
           created_at?: string
+          government_id_doc_path?: string | null
           id?: string
           insurance_doc_path?: string | null
           is_online?: boolean
@@ -409,7 +413,9 @@ export type Database = {
           base_lng?: number | null
           bio?: string | null
           business_name?: string
+          contact_numbers?: string[]
           created_at?: string
+          government_id_doc_path?: string | null
           id?: string
           insurance_doc_path?: string | null
           is_online?: boolean

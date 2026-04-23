@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import SiteHeader from "@/components/SiteHeader";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Users, Store, Receipt, ShieldAlert } from "lucide-react";
+import { Users, Store, Receipt, ShieldAlert, UserPlus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { formatCurrency } from "@/lib/payment";
 
@@ -73,6 +73,27 @@ export default function AdminDashboard() {
           <CardContent>
             <p className="text-sm text-muted-foreground">
               {pending === 0 ? "No vendors awaiting verification." : `${pending} vendor${pending === 1 ? "" : "s"} awaiting verification.`}
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card className="mt-6">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
+                  <UserPlus className="h-5 w-5 text-primary" />
+                </div>
+                <CardTitle>Manual account creation</CardTitle>
+              </div>
+              <Button asChild variant="outline" size="sm">
+                <Link to="/admin/accounts">Open creator</Link>
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-muted-foreground">
+              Create customer logins and vendor profiles with categories, contact numbers, and verification documents.
             </p>
           </CardContent>
         </Card>
