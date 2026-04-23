@@ -11,6 +11,7 @@ import VendorDashboard from "./pages/dashboards/VendorDashboard.tsx";
 import AdminDashboard from "./pages/dashboards/AdminDashboard.tsx";
 import VendorOnboarding from "./pages/vendor/VendorOnboarding.tsx";
 import AdminVendors from "./pages/admin/AdminVendors.tsx";
+import AdminAccounts from "./pages/admin/AdminAccounts.tsx";
 import BrowseCategories from "./pages/customer/BrowseCategories.tsx";
 import CategoryVendors from "./pages/customer/CategoryVendors.tsx";
 import NewBooking from "./pages/customer/NewBooking.tsx";
@@ -127,6 +128,14 @@ const App = () => (
               element={
                 <ProtectedRoute requiredRole="admin">
                   <AdminVendors />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/accounts"
+              element={
+                <ProtectedRoute requiredRole="admin">
+                  <AdminAccounts />
                 </ProtectedRoute>
               }
             />
