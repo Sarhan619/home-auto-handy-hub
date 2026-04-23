@@ -12,13 +12,13 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { Building2, Loader2, Upload, UserPlus, FileCheck2, ShieldCheck } from "lucide-react";
 import { z } from "zod";
+import type { AdminCreateCustomerPayload, AdminCreateVendorPayload, VendorPriceType } from "@/lib/adminAccounts";
 
 type RoleTab = "customer" | "vendor";
 type Category = { id: string; name: string; slug: string };
-type PriceType = "fixed" | "hourly" | "quote";
 type ServiceDraft = {
   categoryId: string;
-  priceType: PriceType;
+  priceType: VendorPriceType;
   basePrice: string;
   description: string;
 };
@@ -162,12 +162,16 @@ export default function AdminAccounts() {
     }
 
     setSubmitting(true);
-    const { error } = await supabase.functions.invoke("admin-create-account", {
-      body: {
+      const payload: AdminCreateCustomerPayload = {
         role: "customer",
-        ...parsed.data,
+        fullName: parsed.data.fullName,
+        email: parsed.data.email,
         phone: parsed.data.phone || null,
-      },
+        password: parsed.data.password,
+      };
+
+      const { error } = await supabase.functions.invoke("admin-create-account", {
+        body: payload,
     });
     setSubmitting(false);
 
@@ -218,27 +222,29 @@ export default function AdminAccounts() {
         insuranceFile ? uploadVendorDocument(insuranceFile, "insurance") : Promise.resolve<string | null>(null),
       ]);
 
-      const { error } = await supabase.functions.invoke("admin-create-account", {
-        body: {
-          role: "vendor",
-          fullName: parsed.data.fullName,
-          email: parsed.data.email,
-          phone: parsed.data.phone || parsed.data.primaryPhone,
-          password: parsed.data.password,
-          vendor: {
-            businessName: parsed.data.businessName,
-            bio: parsed.data.bio.trim() || null,
-            baseAddress: parsed.data.baseAddress.trim(),
-            serviceRadiusKm: parsed.data.serviceRadiusKm,
-            primaryPhone: parsed.data.primaryPhone,
-            contactNumbers: additionalContactList,
-            licenseDocPath,
-            governmentIdDocPath,
-            insuranceDocPath,
-            services,
-            verificationStatus: "pending",
-          },
+      const payload: AdminCreateVendorPayload = {
+        role: "vendor",
+        fullName: parsed.data.fullName,
+        email: parsed.data.email,
+        phone: parsed.data.phone || parsed.data.primaryPhone,
+        password: parsed.data.password,
+        vendor: {
+          businessName: parsed.data.businessName,
+          bio: parsed.data.bio.trim() || null,
+          baseAddress: parsed.data.baseAddress.trim(),
+          serviceRadiusKm: parsed.data.serviceRadiusKm,
+          primaryPhone: parsed.data.primaryPhone,
+          contactNumbers: additionalContactList,
+          licenseDocPath,
+          governmentIdDocPath,
+          insuranceDocPath,
+          services,
+          verificationStatus: "pending",
         },
+      };
+
+      const { error } = await supabase.functions.invoke("admin-create-account", {
+        body: payload,
       });
 
       if (error) {
@@ -381,7 +387,7 @@ export default function AdminAccounts() {
                                   <select
                                     id={`price-type-${category.id}`}
                                     value={draft.priceType}
-                                    onChange={(e) => updateServiceDraft(category.id, { priceType: e.target.value as PriceType })}
+                                    onChange={(e) => updateServiceDraft(category.id, { priceType: e.target.value as VendorPriceType })}
                                     className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                                   >
                                     <option value="quote">Quote on request</option>
